@@ -1,0 +1,28 @@
+# Apple and editor outputs
+.DS_Store
+*.xcuserstate
+xcuserdata/
+DerivedData/
+.build/
+build/
+.swiftpm/
+
+# Generated reports and local data
+coverage/
+test-results/
+*.xcresult/
+*.sqlite-shm
+*.sqlite-wal
+*.bak
+*.log
+
+# Credentials and sensitive local exports
+.env
+*.p8
+*.p12
+*.mobileprovision
+*.cer
+exports/
+backups/
+
+# Keep source, assets, docs and app store metadata tracked

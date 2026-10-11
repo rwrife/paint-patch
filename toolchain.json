@@ -1,0 +1,30 @@
+{
+  "status": "active - scaffold",
+  "schema": "tool-lab/toolchain/v1",
+  "platform": "ios",
+  "device_family": "iphone-only",
+  "implementation": "native-swift",
+  "xcode_version": "26.0.1",
+  "xcode_build": "17A400",
+  "iphoneos_sdk": "26.0",
+  "minimum_sdk_major": 26,
+  "deployment_target": "26.0",
+  "swift_language_mode": "6",
+  "bundle_identifier": "com.infinityball.paintpatch",
+  "targeted_device_family": "1",
+  "native_ipad_support": false,
+  "network_allowlist": [],
+  "ui_frameworks_allowed": [
+    "SwiftUI",
+    "UIKit"
+  ],
+  "ui_frameworks_prohibited": [
+    "Flutter",
+    "React Native",
+    "Expo",
+    "Kotlin Multiplatform",
+    ".NET MAUI",
+    "Unity"
+  ],
+  "notes": "Offline iPhone paint-sampling and touch-up companion. PaintWorkspaceLayout is the single dual-screen composition seam, not an unavailable fold SDK dependency."
+}
