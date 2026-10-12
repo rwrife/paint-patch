@@ -29,8 +29,12 @@ write_provenance() {
     echo "exit_status=$result"
   } > "$artifact_dir/provenance.txt"
   if [[ -n "${DEVELOPER_DIR:-}" ]]; then
-    timeout 15 xcodebuild -version > "$artifact_dir/xcode-version.txt" 2>&1 || true
-    timeout 15 xcrun --sdk iphoneos --show-sdk-version > "$artifact_dir/iphoneos-sdk-version.txt" 2>&1 || true
+    python3 Scripts/boot_simulator.py capture \
+      --timeout 15 --output "$artifact_dir/xcode-version.txt" \
+      -- xcodebuild -version || true
+    python3 Scripts/boot_simulator.py capture \
+      --timeout 15 --output "$artifact_dir/iphoneos-sdk-version.txt" \
+      -- xcrun --sdk iphoneos --show-sdk-version || true
   fi
 }
 trap write_provenance EXIT
