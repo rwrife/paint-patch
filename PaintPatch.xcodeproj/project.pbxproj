@@ -1,0 +1,41 @@
+// !$*UTF8*$!
+{
+ archiveVersion = 1;
+ classes = {};
+ objectVersion = 71;
+ objects = {
+  AA0000000000000000000001 = {isa = PBXProject; attributes = {LastUpgradeCheck = 2600; TargetAttributes = {AA0000000000000000000002 = {CreatedOnToolsVersion = 26.0; }; AA0000000000000000000003 = {CreatedOnToolsVersion = 26.0; TestTargetID = AA0000000000000000000002; }; }; }; buildConfigurationList = AA0000000000000000000020; compatibilityVersion = "Xcode 16.0"; developmentRegion = en; hasScannedForEncodings = 0; knownRegions = (en, Base); mainGroup = AA0000000000000000000004; packageReferences = (AA0000000000000000000019); productRefGroup = AA0000000000000000000007; projectDirPath = ""; projectRoot = ""; targets = (AA0000000000000000000002, AA0000000000000000000003); };
+  AA0000000000000000000002 = {isa = PBXNativeTarget; buildConfigurationList = AA0000000000000000000021; buildPhases = (AA000000000000000000000F, AA0000000000000000000011, AA0000000000000000000013); buildRules = (); dependencies = (); name = PaintPatch; packageProductDependencies = (AA000000000000000000001A); productName = PaintPatch; productReference = AA000000000000000000000A; productType = "com.apple.product-type.application"; };
+  AA0000000000000000000003 = {isa = PBXNativeTarget; buildConfigurationList = AA0000000000000000000022; buildPhases = (AA0000000000000000000010, AA0000000000000000000012); buildRules = (); dependencies = (AA0000000000000000000018); name = PaintPatchUITests; productName = PaintPatchUITests; productReference = AA000000000000000000000B; productType = "com.apple.product-type.bundle.ui-testing"; };
+  AA0000000000000000000004 = {isa = PBXGroup; children = (AA0000000000000000000005, AA0000000000000000000006, AA0000000000000000000007); sourceTree = "<group>"; };
+  AA0000000000000000000005 = {isa = PBXGroup; children = (AA0000000000000000000008); path = App; sourceTree = "<group>"; };
+  AA0000000000000000000006 = {isa = PBXGroup; children = (AA0000000000000000000009); path = UITests; sourceTree = "<group>"; };
+  AA0000000000000000000007 = {isa = PBXGroup; children = (AA000000000000000000000A, AA000000000000000000000B); name = Products; sourceTree = "<group>"; };
+  AA0000000000000000000008 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaintPatchApp.swift; sourceTree = "<group>"; };
+  AA0000000000000000000009 = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PaintPatchLaunchTests.swift; sourceTree = "<group>"; };
+  AA000000000000000000000A = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = PaintPatch.app; sourceTree = BUILT_PRODUCTS_DIR; };
+  AA000000000000000000000B = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = PaintPatchUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+  AA000000000000000000000C = {isa = PBXBuildFile; fileRef = AA0000000000000000000008; };
+  AA000000000000000000000D = {isa = PBXBuildFile; fileRef = AA0000000000000000000009; };
+  AA000000000000000000000E = {isa = PBXBuildFile; productRef = AA000000000000000000001A; };
+  AA000000000000000000000F = {isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = (AA000000000000000000000C); runOnlyForDeploymentPostprocessing = 0; };
+  AA0000000000000000000010 = {isa = PBXSourcesBuildPhase; buildActionMask = 2147483647; files = (AA000000000000000000000D); runOnlyForDeploymentPostprocessing = 0; };
+  AA0000000000000000000011 = {isa = PBXFrameworksBuildPhase; buildActionMask = 2147483647; files = (AA000000000000000000000E); runOnlyForDeploymentPostprocessing = 0; };
+  AA0000000000000000000012 = {isa = PBXFrameworksBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; };
+  AA0000000000000000000013 = {isa = PBXResourcesBuildPhase; buildActionMask = 2147483647; files = (); runOnlyForDeploymentPostprocessing = 0; };
+  AA0000000000000000000017 = {isa = PBXContainerItemProxy; containerPortal = AA0000000000000000000001; proxyType = 1; remoteGlobalIDString = AA0000000000000000000002; remoteInfo = PaintPatch; };
+  AA0000000000000000000018 = {isa = PBXTargetDependency; target = AA0000000000000000000002; targetProxy = AA0000000000000000000017; };
+  AA0000000000000000000019 = {isa = XCLocalSwiftPackageReference; relativePath = Packages/PaintPatchKit; };
+  AA000000000000000000001A = {isa = XCSwiftPackageProductDependency; productName = PaintPatchKit; };
+  AA0000000000000000000020 = {isa = XCConfigurationList; buildConfigurations = (AA0000000000000000000030, AA0000000000000000000031); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release; };
+  AA0000000000000000000021 = {isa = XCConfigurationList; buildConfigurations = (AA0000000000000000000032, AA0000000000000000000033); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release; };
+  AA0000000000000000000022 = {isa = XCConfigurationList; buildConfigurations = (AA0000000000000000000034, AA0000000000000000000035); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release; };
+  AA0000000000000000000030 = {isa = XCBuildConfiguration; buildSettings = {CLANG_ENABLE_MODULES = YES; ENABLE_USER_SCRIPT_SANDBOXING = YES; IPHONEOS_DEPLOYMENT_TARGET = 26.0; ONLY_ACTIVE_ARCH = YES; SDKROOT = iphoneos; SWIFT_VERSION = 6.0; }; name = Debug; };
+  AA0000000000000000000031 = {isa = XCBuildConfiguration; buildSettings = {CLANG_ENABLE_MODULES = YES; ENABLE_USER_SCRIPT_SANDBOXING = YES; IPHONEOS_DEPLOYMENT_TARGET = 26.0; SDKROOT = iphoneos; SWIFT_COMPILATION_MODE = wholemodule; SWIFT_VERSION = 6.0; }; name = Release; };
+  AA0000000000000000000032 = {isa = XCBuildConfiguration; buildSettings = {CODE_SIGN_STYLE = Automatic; CURRENT_PROJECT_VERSION = 1; GENERATE_INFOPLIST_FILE = YES; INFOPLIST_KEY_CFBundleDisplayName = "Paint Patch"; INFOPLIST_KEY_UILaunchScreen_Generation = YES; INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait; IPHONEOS_DEPLOYMENT_TARGET = 26.0; MARKETING_VERSION = 0.1.0; PRODUCT_BUNDLE_IDENTIFIER = com.infinityball.paintpatch; PRODUCT_NAME = "$(TARGET_NAME)"; SUPPORTED_PLATFORMS = "iphoneos iphonesimulator"; SUPPORTS_MACCATALYST = NO; SWIFT_VERSION = 6.0; TARGETED_DEVICE_FAMILY = 1; }; name = Debug; };
+  AA0000000000000000000033 = {isa = XCBuildConfiguration; buildSettings = {CODE_SIGN_STYLE = Automatic; CURRENT_PROJECT_VERSION = 1; GENERATE_INFOPLIST_FILE = YES; INFOPLIST_KEY_CFBundleDisplayName = "Paint Patch"; INFOPLIST_KEY_UILaunchScreen_Generation = YES; INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait; IPHONEOS_DEPLOYMENT_TARGET = 26.0; MARKETING_VERSION = 0.1.0; PRODUCT_BUNDLE_IDENTIFIER = com.infinityball.paintpatch; PRODUCT_NAME = "$(TARGET_NAME)"; SUPPORTED_PLATFORMS = "iphoneos iphonesimulator"; SUPPORTS_MACCATALYST = NO; SWIFT_VERSION = 6.0; TARGETED_DEVICE_FAMILY = 1; }; name = Release; };
+  AA0000000000000000000034 = {isa = XCBuildConfiguration; buildSettings = {CODE_SIGN_STYLE = Automatic; GENERATE_INFOPLIST_FILE = YES; IPHONEOS_DEPLOYMENT_TARGET = 26.0; PRODUCT_BUNDLE_IDENTIFIER = com.infinityball.paintpatch.uitests; PRODUCT_NAME = "$(TARGET_NAME)"; SWIFT_VERSION = 6.0; TARGETED_DEVICE_FAMILY = 1; TEST_TARGET_NAME = PaintPatch; }; name = Debug; };
+  AA0000000000000000000035 = {isa = XCBuildConfiguration; buildSettings = {CODE_SIGN_STYLE = Automatic; GENERATE_INFOPLIST_FILE = YES; IPHONEOS_DEPLOYMENT_TARGET = 26.0; PRODUCT_BUNDLE_IDENTIFIER = com.infinityball.paintpatch.uitests; PRODUCT_NAME = "$(TARGET_NAME)"; SWIFT_VERSION = 6.0; TARGETED_DEVICE_FAMILY = 1; TEST_TARGET_NAME = PaintPatch; }; name = Release; };
+ };
+ rootObject = AA0000000000000000000001;
+}

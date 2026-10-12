@@ -1,5 +1,7 @@
 # Apple and editor outputs
 .DS_Store
+__pycache__/
+*.pyc
 *.xcuserstate
 xcuserdata/
 DerivedData/
