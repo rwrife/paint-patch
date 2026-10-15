@@ -79,7 +79,7 @@ final class PaintPatchKitTests: XCTestCase {
         let other = PhotoReference(fileName: "patch-2.jpg")
         try ws.addPhoto(photo)
         try ws.addPhoto(other)
-        let obs = Observation(candidateID: a.id, lighting: "North window", photoID: photo.id)
+        let obs = PatchObservation(candidateID: a.id, lighting: "North window", photoID: photo.id)
         ws.observations = [obs]
 
         try ws.relinkPhoto(observationID: obs.id, to: other.id)
@@ -119,7 +119,7 @@ final class PaintPatchKitTests: XCTestCase {
         ws.candidates = [Candidate(roomID: UUID(), label: "orphan")]
         XCTAssertThrowsError(try ws.validate())
         ws.candidates = [a]
-        ws.observations = [Observation(candidateID: a.id, photoID: UUID())]
+        ws.observations = [PatchObservation(candidateID: a.id, photoID: UUID())]
         XCTAssertThrowsError(try ws.validate())
         ws.observations = []
         ws.selections = [Selection(roomID: room.id, candidateID: a.id)] // a lives in room: ok
@@ -136,7 +136,7 @@ final class PaintPatchKitTests: XCTestCase {
         ws.rooms = [room]; ws.candidates = [a, b]
         let photo = PhotoReference(fileName: "p.jpg")
         try ws.addPhoto(photo)
-        ws.observations = [Observation(candidateID: a.id, lighting: "Dusk", photoID: photo.id)]
+        ws.observations = [PatchObservation(candidateID: a.id, lighting: "Dusk", photoID: photo.id)]
         ws.selections = [Selection(roomID: room.id, candidateID: a.id)]
         ws.touchUps = [TouchUpEvent(candidateID: a.id, canLot: "LOT-9")]
 
@@ -160,7 +160,7 @@ final class PaintPatchKitTests: XCTestCase {
         let (room, a, _) = fixture()
         let v1 = """
         {"version":1,"rooms":[\(json(room))],"candidates":[\(json(a))],\
-        "observations":[\(json(Observation(candidateID: a.id, lighting: "Dusk")))],\
+        "observations":[\(json(PatchObservation(candidateID: a.id, lighting: "Dusk")))],\
         "touchUps":[\(json(TouchUpEvent(candidateID: a.id)))]}
         """
         let ws = try JSONDecoder().decode(PaintWorkspace.self, from: Data(v1.utf8))
@@ -185,7 +185,7 @@ final class PaintPatchKitTests: XCTestCase {
         let (room, a, _) = fixture()
         let bad = """
         {"version":2,"rooms":[\(json(room))],"candidates":[\(json(a))],\
-        "photos":[],"observations":[\(json(Observation(candidateID: a.id, photoID: UUID())))],\
+        "photos":[],"observations":[\(json(PatchObservation(candidateID: a.id, photoID: UUID())))],\
         "selections":[],"touchUps":[]}
         """
         XCTAssertThrowsError(try JSONDecoder().decode(PaintWorkspace.self, from: Data(bad.utf8))) { error in

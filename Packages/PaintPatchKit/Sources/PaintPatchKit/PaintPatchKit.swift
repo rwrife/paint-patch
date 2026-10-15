@@ -34,7 +34,7 @@ public struct PhotoReference: Codable, Equatable, Identifiable, Sendable {
     }
 }
 
-public struct Observation: Codable, Equatable, Identifiable, Sendable {
+public struct PatchObservation: Codable, Equatable, Identifiable, Sendable {
     public var id: UUID
     public var candidateID: UUID
     public var observedAt: Date
@@ -88,7 +88,7 @@ public struct PaintWorkspace: Codable, Equatable, Sendable {
     public var rooms: [Room] = []
     public var candidates: [Candidate] = []
     public var photos: [PhotoReference] = []
-    public var observations: [Observation] = []
+    public var observations: [PatchObservation] = []
     public var selections: [Selection] = []
     public var touchUps: [TouchUpEvent] = []
 
@@ -106,7 +106,7 @@ public struct PaintWorkspace: Codable, Equatable, Sendable {
         }
         rooms = try values.decode([Room].self, forKey: .rooms)
         candidates = try values.decode([Candidate].self, forKey: .candidates)
-        observations = try values.decode([Observation].self, forKey: .observations)
+        observations = try values.decode([PatchObservation].self, forKey: .observations)
         touchUps = try values.decode([TouchUpEvent].self, forKey: .touchUps)
         if storedVersion >= 2 {
             photos = try values.decode([PhotoReference].self, forKey: .photos)
