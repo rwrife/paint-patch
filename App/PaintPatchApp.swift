@@ -103,24 +103,28 @@ struct ContentView: View {
 
     var body: some View {
         NavigationStack {
-            List {
-                Section("New room") {
-                    TextField("Room name", text: $name).accessibilityIdentifier("room.name")
-                    Button("Add room") {
-                        notebook.save { _ = try $0.recordRoom(name) }
-                        if notebook.error == nil { name = "" }
-                    }.accessibilityIdentifier("room.add")
-                }
-                Section("Rooms") {
-                    ForEach(notebook.workspace.rooms) { room in
-                        NavigationLink(room.name) { RoomView(notebook: notebook, room: room) }
+            VStack(spacing: 0) {
+                Text("Paint Patch")
+                    .font(.headline)
+                    .accessibilityIdentifier("app.title")
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.horizontal)
+                List {
+                    Section("New room") {
+                        TextField("Room name", text: $name).accessibilityIdentifier("room.name")
+                        Button("Add room") {
+                            notebook.save { _ = try $0.recordRoom(name) }
+                            if notebook.error == nil { name = "" }
+                        }.accessibilityIdentifier("room.add")
+                    }
+                    Section("Rooms") {
+                        ForEach(notebook.workspace.rooms) { room in
+                            NavigationLink(room.name) { RoomView(notebook: notebook, room: room) }
+                        }
                     }
                 }
             }
             .navigationTitle("Paint Patch")
-            .toolbar { ToolbarItem(placement: .principal) {
-                Text("Paint Patch").accessibilityIdentifier("app.title")
-            } }
             .alert("Notebook error", isPresented: Binding(get: { notebook.error != nil },
                                                           set: { if !$0 { notebook.error = nil } })) {
                 Button("OK") { notebook.error = nil }

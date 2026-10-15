@@ -32,12 +32,12 @@ extension PaintWorkspace {
     @discardableResult
     public mutating func recordObservation(candidateID: UUID, lighting: String,
                                            surface: String, notes: String,
-                                           photoID: UUID? = nil, observedAt: Date = Date()) throws -> Observation {
+                                           photoID: UUID? = nil, observedAt: Date = Date()) throws -> PatchObservation {
         guard candidates.contains(where: { $0.id == candidateID }),
               photoID == nil || photos.contains(where: { $0.id == photoID }) else {
             throw WorkspaceError.invalidReference
         }
-        let observation = Observation(candidateID: candidateID, observedAt: observedAt,
+        let observation = PatchObservation(candidateID: candidateID, observedAt: observedAt,
                                       lighting: paintFact(lighting), surface: paintFact(surface),
                                       notes: paintFact(notes), photoID: photoID)
         observations.append(observation)
