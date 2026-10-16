@@ -64,6 +64,18 @@ final class Notebook {
               let data = try? Data(contentsOf: repository.photoURL(ref)) else { return nil }
         return UIImage(data: data)
     }
+
+    func select(_ candidate: Candidate, in room: Room) {
+        save { _ = try $0.selectCandidate(candidate.id, in: room.id) }
+    }
+
+    func deselect(in room: Room) {
+        save { _ = try $0.deselect(in: room.id) }
+    }
+
+    func logTouchUp(in room: Room, canLot: String, notes: String) {
+        save { _ = try $0.logTouchUp(in: room.id, canLot: canLot, notes: notes) }
+    }
 }
 
 struct CameraCapture: UIViewControllerRepresentable {
@@ -174,7 +186,125 @@ struct RoomView: View {
                     }
                 }
             }
+            Section("Compare and record") {
+                NavigationLink("Compare samples and log touch-ups") {
+                    PaintWorkspaceLayout(notebook: notebook, room: room)
+                }
+                .accessibilityIdentifier("workspace.open")
+            }
         }.navigationTitle(room.name)
+    }
+}
+
+/// Single-screen iPhone composition seam. A future supported Duo SDK can move
+/// gallery and controls to separate displays without changing record semantics.
+struct PaintWorkspaceLayout: View {
+    let notebook: Notebook
+    let room: Room
+    @State private var lot = ""
+    @State private var notes = ""
+
+    private var samples: [Candidate] {
+        notebook.workspace.candidates.filter { $0.roomID == room.id }
+    }
+
+    private var selected: Candidate? {
+        guard let id = notebook.workspace.selectedCandidateID(in: room.id) else { return nil }
+        return samples.first { $0.id == id }
+    }
+
+    var body: some View {
+        List {
+            Section("Compare samples — photos and screens are not physical color measurements") {
+                if samples.isEmpty {
+                    Text("Add a sample to compare. No paint is selected.")
+                }
+                ScrollView(.horizontal) {
+                    HStack(alignment: .top, spacing: 12) {
+                        ForEach(samples) { candidate in
+                            comparisonCard(candidate)
+                                .frame(width: 240, alignment: .topLeading)
+                                .padding()
+                                .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 12))
+                        }
+                    }
+                    .padding(.vertical, 4)
+                }
+                .accessibilityIdentifier("workspace.gallery")
+            }
+            Section("Chosen paint and touch-up controls") {
+                Text("Selected: \(selected?.label ?? "None")")
+                    .font(.headline)
+                    .accessibilityIdentifier("workspace.selected")
+                if selected != nil {
+                    Button("Clear selection") { notebook.deselect(in: room) }
+                        .accessibilityIdentifier("workspace.clear")
+                    TextField("Actual can lot (optional)", text: $lot)
+                        .accessibilityIdentifier("workspace.lot")
+                    TextField("Touch-up notes (optional)", text: $notes)
+                    Button("Log applied touch-up") {
+                        notebook.logTouchUp(in: room, canLot: lot, notes: notes)
+                        if notebook.error == nil { lot = ""; notes = "" }
+                    }
+                    .accessibilityIdentifier("workspace.touchup")
+                }
+                Text("Choose explicitly. Unknown codes and finishes stay unknown. Check physical samples under real lighting before applying paint.")
+                    .font(.caption)
+            }
+            Section("Selection history") {
+                ForEach(notebook.workspace.selections.filter { $0.roomID == room.id }) { event in
+                    let name = samples.first { $0.id == event.candidateID }?.label ?? "Cleared"
+                    Text("\(name) · \(event.selectedAt.formatted(date: .abbreviated, time: .shortened))")
+                }
+            }
+            Section("Applied touch-ups") {
+                ForEach(notebook.workspace.touchUps(in: room.id)) { event in
+                    let name = samples.first { $0.id == event.candidateID }?.label ?? "Unknown"
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("\(name) · Lot: \(event.canLot ?? "Unknown")")
+                        Text(event.appliedAt, format: .dateTime)
+                        if let notes = event.notes { Text(notes) }
+                    }
+                }
+            }
+        }
+        .navigationTitle("Compare · \(room.name)")
+        .alert("Notebook error", isPresented: Binding(get: { notebook.error != nil },
+                                                      set: { if !$0 { notebook.error = nil } })) {
+            Button("OK") { notebook.error = nil }
+        } message: { Text(notebook.error ?? "") }
+    }
+
+    private func comparisonCard(_ candidate: Candidate) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(candidate.label).font(.headline)
+            Text("Brand: \(candidate.brand ?? "Unknown")")
+            Text("Code: \(candidate.code ?? "Unknown")")
+            Text("Finish: \(candidate.finish ?? "Unknown")")
+            Text("Patch location: \(candidate.wallLocation ?? "Unknown")")
+            Text("Can lot: \(candidate.canLot ?? "Unknown")")
+            ForEach(notebook.workspace.observations.filter { $0.candidateID == candidate.id }) { observation in
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(observation.observedAt, format: .dateTime)
+                    Text("Lighting: \(observation.lighting ?? "Unknown")")
+                    Text("Surface: \(observation.surface ?? "Unknown")")
+                    if let notes = observation.notes { Text(notes) }
+                    if let image = notebook.photo(observation.photoID) {
+                        Image(uiImage: image).resizable().scaledToFit()
+                            .accessibilityLabel("User-selected patch photo; not a color measurement")
+                    }
+                }
+            }
+            let isSelected = selected?.id == candidate.id
+            Text(isSelected ? "Selected" : "Not selected")
+                .font(.subheadline.bold())
+            Button(isSelected ? "Selected: \(candidate.label)" : "Choose \(candidate.label)") {
+                notebook.select(candidate, in: room)
+            }
+            .accessibilityIdentifier("workspace.choose.\(candidate.label)")
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .accessibilityElement(children: .contain)
     }
 }
 
