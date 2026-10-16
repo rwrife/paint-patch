@@ -71,8 +71,12 @@ final class PaintPatchLaunchTests: XCTestCase {
         app.staticTexts["Hall"].tap()
 
         func addSample(_ label: String, code: String) {
-            app.textFields["sample.label"].tap()
-            app.textFields["sample.label"].typeText(label)
+            let labelField = app.textFields["sample.label"]
+            for _ in 0..<3 where !(labelField.exists && labelField.isHittable) {
+                app.swipeDown()
+            }
+            labelField.tap()
+            labelField.typeText(label)
             app.textFields["sample.code"].tap()
             app.textFields["sample.code"].typeText(code)
             dismissKeyboard()
@@ -82,7 +86,11 @@ final class PaintPatchLaunchTests: XCTestCase {
         addSample("Alpha", code: "PPU18-15")
         addSample("Beta", code: "PPU37-12")
 
-        app.buttons["workspace.open"].tap()
+        let workspaceButton = app.buttons["workspace.open"]
+        for _ in 0..<3 where !(workspaceButton.exists && workspaceButton.isHittable) {
+            app.swipeUp()
+        }
+        workspaceButton.tap()
         // Explicit selection required: nothing is chosen automatically.
         XCTAssertEqual(app.staticTexts["workspace.selected"].label, "Selected: None")
 
