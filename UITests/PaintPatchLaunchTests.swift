@@ -21,6 +21,20 @@ final class PaintPatchLaunchTests: XCTestCase {
         }
     }
 
+    /// Lazy List rows are absent from the AX tree until scrolled into view; reveal bounded, both directions.
+    @discardableResult
+    private func reveal(_ element: XCUIElement) -> XCUIElement {
+        for _ in 0..<5 where !(element.exists && element.isHittable) { app.swipeUp() }
+        for _ in 0..<8 where !(element.exists && element.isHittable) { app.swipeDown() }
+        return element
+    }
+
+    private func revealText(_ text: XCUIElement) -> Bool {
+        for _ in 0..<5 where !text.exists { app.swipeUp() }
+        for _ in 0..<8 where !text.exists { app.swipeDown() }
+        return text.exists
+    }
+
     func testLaunchShowsNotebookTitle() {
         launchApp()
     }
@@ -90,26 +104,26 @@ final class PaintPatchLaunchTests: XCTestCase {
         for _ in 0..<3 where !(workspaceButton.exists && workspaceButton.isHittable) {
             app.swipeUp()
         }
-        workspaceButton.tap()
+        reveal(workspaceButton).tap()
         // Explicit selection required: nothing is chosen automatically.
-        XCTAssertEqual(app.staticTexts["workspace.selected"].label, "Selected: None")
+        XCTAssertEqual(reveal(app.staticTexts["workspace.selected"]).label, "Selected: None")
 
         // Color-independent cue: card text states the selection, not just tint.
         app.buttons["workspace.choose.Alpha"].tap()
-        XCTAssertEqual(app.staticTexts["workspace.selected"].label, "Selected: Alpha")
+        XCTAssertEqual(reveal(app.staticTexts["workspace.selected"]).label, "Selected: Alpha")
 
         // Touch-up with a blank lot keeps the lot unknown, never inferred.
-        app.buttons["workspace.touchup"].tap()
-        XCTAssertTrue(app.staticTexts["Alpha · Lot: Unknown"].waitForExistence(timeout: 5))
+        reveal(app.buttons["workspace.touchup"]).tap()
+        XCTAssertTrue(revealText(app.staticTexts["Alpha · Lot: Unknown"]))
 
         // Revise: choosing Beta appends a new event; undo returns to None.
         let gallery = app.scrollViews["workspace.gallery"]
         XCTAssertTrue(gallery.waitForExistence(timeout: 5))
         gallery.swipeLeft()
         app.buttons["workspace.choose.Beta"].tap()
-        XCTAssertEqual(app.staticTexts["workspace.selected"].label, "Selected: Beta")
-        app.buttons["workspace.clear"].tap()
-        XCTAssertEqual(app.staticTexts["workspace.selected"].label, "Selected: None")
+        XCTAssertEqual(reveal(app.staticTexts["workspace.selected"]).label, "Selected: Beta")
+        reveal(app.buttons["workspace.clear"]).tap()
+        XCTAssertEqual(reveal(app.staticTexts["workspace.selected"]).label, "Selected: None")
 
         // Append-only history survives undo and relaunch (still shows Alpha, Beta, cleared).
         let directory = app.launchArguments.last!
@@ -117,8 +131,8 @@ final class PaintPatchLaunchTests: XCTestCase {
         app.launchArguments = ["-PPTestContainerDirectory", directory]
         app.launch()
         app.staticTexts["Hall"].tap()
-        app.buttons["workspace.open"].tap()
-        XCTAssertEqual(app.staticTexts["workspace.selected"].label, "Selected: None")
-        XCTAssertTrue(app.staticTexts["Alpha · Lot: Unknown"].waitForExistence(timeout: 5))
+        reveal(app.buttons["workspace.open"]).tap()
+        XCTAssertEqual(reveal(app.staticTexts["workspace.selected"]).label, "Selected: None")
+        XCTAssertTrue(revealText(app.staticTexts["Alpha · Lot: Unknown"]))
     }
 }
