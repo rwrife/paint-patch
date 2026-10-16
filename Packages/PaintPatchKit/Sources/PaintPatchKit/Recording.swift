@@ -43,6 +43,62 @@ extension PaintWorkspace {
         observations.append(observation)
         return observation
     }
+
+    /// Append-only: selecting replaces nothing; a new event wins. Re-selecting is a visible revision.
+    @discardableResult
+    public mutating func selectCandidate(_ candidateID: UUID, in roomID: UUID,
+                                         selectedAt: Date = Date()) throws -> Selection {
+        guard let candidate = candidates.first(where: { $0.id == candidateID }),
+              candidate.roomID == roomID else { throw WorkspaceError.invalidReference }
+        let selection = Selection(roomID: roomID, candidateID: candidateID, selectedAt: selectedAt)
+        selections.append(selection)
+        return selection
+    }
+
+    /// Undo = append a nil-choice event. Prior history stays intact.
+    @discardableResult
+    public mutating func deselect(in roomID: UUID, selectedAt: Date = Date()) throws -> Selection {
+        guard rooms.contains(where: { $0.id == roomID }) else { throw WorkspaceError.invalidReference }
+        let selection = Selection(roomID: roomID, candidateID: nil, selectedAt: selectedAt)
+        selections.append(selection)
+        return selection
+    }
+
+    /// Logs an actually applied touch-up. Blank can lot stays unknown, never inferred.
+    @discardableResult
+    public mutating func logTouchUp(candidateID: UUID, canLot: String, notes: String,
+                                    appliedAt: Date = Date()) throws -> TouchUpEvent {
+        guard candidates.contains(where: { $0.id == candidateID }) else {
+            throw WorkspaceError.invalidReference
+        }
+        let event = TouchUpEvent(candidateID: candidateID, appliedAt: appliedAt,
+                                 canLot: paintFact(canLot), notes: paintFact(notes))
+        touchUps.append(event)
+        return event
+    }
+
+    /// Logs an actually applied touch-up for the room's currently selected candidate.
+    /// Blank can lot stays unknown, never inferred. No selection → nothing to log.
+    @discardableResult
+    public mutating func logTouchUp(in roomID: UUID, canLot: String, notes: String,
+                                    appliedAt: Date = Date()) throws -> TouchUpEvent {
+        guard let candidateID = selectedCandidateID(in: roomID) else {
+            throw WorkspaceError.invalidReference
+        }
+        return try logTouchUp(candidateID: candidateID, canLot: canLot, notes: notes,
+                              appliedAt: appliedAt)
+    }
+
+    /// Oldest-first touch-up history for every candidate in one room.
+    public func touchUps(in roomID: UUID) -> [TouchUpEvent] {
+        let ids = Set(candidates.filter { $0.roomID == roomID }.map(\.id))
+        return touchUps.filter { ids.contains($0.candidateID) }.sorted { $0.appliedAt < $1.appliedAt }
+    }
+
+    /// Oldest-first history for one candidate; the log is append-only, sorting is display order.
+    public func touchUps(for candidateID: UUID) -> [TouchUpEvent] {
+        touchUps.filter { $0.candidateID == candidateID }.sorted { $0.appliedAt < $1.appliedAt }
+    }
 }
 
 /// Copy-on-write persistence: failed validation/write never publishes an in-memory change.
