@@ -123,7 +123,9 @@ struct ContentView: View {
                     .padding(.horizontal)
                 List {
                     Section("New room") {
-                        TextField("Room name", text: $name).accessibilityIdentifier("room.name")
+                        TextField("Room name", text: $name)
+                            .submitLabel(.done)
+                            .accessibilityIdentifier("room.name")
                         Button("Add room") {
                             notebook.save { _ = try $0.recordRoom(name) }
                             if notebook.error == nil { name = "" }
@@ -158,12 +160,20 @@ struct RoomView: View {
     var body: some View {
         List {
             Section("New sample — transcribe can label; blank means unknown") {
-                TextField("Sample label", text: $label).accessibilityIdentifier("sample.label")
+                TextField("Sample label", text: $label)
+                    .submitLabel(.done)
+                    .accessibilityIdentifier("sample.label")
                 TextField("Brand (optional)", text: $brand)
-                TextField("Can color code (optional)", text: $code).accessibilityIdentifier("sample.code")
+                    .submitLabel(.done)
+                TextField("Can color code (optional)", text: $code)
+                    .submitLabel(.done)
+                    .accessibilityIdentifier("sample.code")
                 TextField("Finish / sheen (optional)", text: $finish)
+                    .submitLabel(.done)
                 TextField("Patch location (optional)", text: $wall)
+                    .submitLabel(.done)
                 TextField("Can lot (optional)", text: $lot)
+                    .submitLabel(.done)
                 Button("Add sample") {
                     notebook.save {
                         _ = try $0.recordCandidate(roomID: room.id, label: label, brand: brand,
@@ -344,9 +354,12 @@ struct SampleView: View {
         List {
             Section("Record patch — lighting is your description, not a color match") {
                 TextField("Lighting (e.g. morning daylight)", text: $lighting)
+                    .submitLabel(.done)
                     .accessibilityIdentifier("observation.lighting")
                 TextField("Surface / patch location", text: $surface)
+                    .submitLabel(.done)
                 TextField("Notes (optional)", text: $notes)
+                    .submitLabel(.done)
                 Button("Save observation without photo") { record() }
                     .accessibilityIdentifier("observation.save")
                 PhotosPicker(selection: $selectedPhoto, matching: .images) {

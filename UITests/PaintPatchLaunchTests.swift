@@ -12,13 +12,16 @@ final class PaintPatchLaunchTests: XCTestCase {
         XCTAssertTrue(app.staticTexts["app.title"].waitForExistence(timeout: 10))
     }
 
-    /// Decimal pads have no return key, so an open keyboard absorbs taps and swipes.
+    /// Tap the actual Done key; a window-level press above the keyboard can leave focus active.
     private func dismissKeyboard() {
-        let keyplane = app.keyboards.firstMatch
-        if keyplane.exists {
-            app.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.08))
-                .withOffset(CGVector(dx: 0, dy: 8)).press(forDuration: 0.05)
+        guard app.keyboards.firstMatch.exists else { return }
+        let done = app.keyboards.buttons["Done"]
+        XCTAssertTrue(done.waitForExistence(timeout: 5), "Text fields must expose a Done key")
+        done.tap()
+        for _ in 0..<50 where app.keyboards.firstMatch.exists {
+            usleep(100_000)
         }
+        XCTAssertFalse(app.keyboards.firstMatch.exists, "Keyboard must close before navigation")
     }
 
     /// Lazy List rows are absent from the AX tree until scrolled into view; reveal bounded, both directions.
@@ -95,7 +98,8 @@ final class PaintPatchLaunchTests: XCTestCase {
             app.textFields["sample.code"].typeText(code)
             dismissKeyboard()
             app.buttons["sample.add"].tap()
-            XCTAssertTrue(app.staticTexts[label].waitForExistence(timeout: 5))
+            // Sample rows below the form are lazy; scroll to materialize the saved row.
+            XCTAssertTrue(revealText(app.staticTexts[label]))
         }
         addSample("Alpha", code: "PPU18-15")
         addSample("Beta", code: "PPU37-12")
