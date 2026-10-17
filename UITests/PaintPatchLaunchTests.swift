@@ -18,9 +18,10 @@ final class PaintPatchLaunchTests: XCTestCase {
         let done = app.keyboards.buttons["Done"]
         XCTAssertTrue(done.waitForExistence(timeout: 5), "Text fields must expose a Done key")
         done.tap()
-        let gone = NSPredicate(format: "exists == false")
-        expectation(for: gone, evaluatedWith: app.keyboards.firstMatch)
-        waitForExpectations(timeout: 5)
+        for _ in 0..<50 where app.keyboards.firstMatch.exists {
+            usleep(100_000)
+        }
+        XCTAssertFalse(app.keyboards.firstMatch.exists, "Keyboard must close before navigation")
     }
 
     /// Lazy List rows are absent from the AX tree until scrolled into view; reveal bounded, both directions.
