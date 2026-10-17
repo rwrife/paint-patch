@@ -98,7 +98,8 @@ final class PaintPatchLaunchTests: XCTestCase {
             app.textFields["sample.code"].typeText(code)
             dismissKeyboard()
             app.buttons["sample.add"].tap()
-            XCTAssertTrue(app.staticTexts[label].waitForExistence(timeout: 5))
+            // Sample rows below the form are lazy; scroll to materialize the saved row.
+            XCTAssertTrue(revealText(app.staticTexts[label]))
         }
         addSample("Alpha", code: "PPU18-15")
         addSample("Beta", code: "PPU37-12")
