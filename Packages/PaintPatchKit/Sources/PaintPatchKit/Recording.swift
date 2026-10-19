@@ -29,6 +29,25 @@ extension PaintWorkspace {
         return candidate
     }
 
+    public mutating func renameRoom(_ id: UUID, to name: String) throws {
+        guard let index = rooms.firstIndex(where: { $0.id == id }),
+              let name = paintFact(name) else { throw WorkspaceError.invalidReference }
+        rooms[index].name = name
+    }
+
+    public mutating func reviseCandidate(_ id: UUID, label: String, brand: String,
+                                         code: String, finish: String, wallLocation: String,
+                                         canLot: String) throws {
+        guard let index = candidates.firstIndex(where: { $0.id == id }),
+              let label = paintFact(label) else { throw WorkspaceError.invalidReference }
+        candidates[index].label = label
+        candidates[index].brand = paintFact(brand)
+        candidates[index].code = paintFact(code)
+        candidates[index].finish = paintFact(finish)
+        candidates[index].wallLocation = paintFact(wallLocation)
+        candidates[index].canLot = paintFact(canLot)
+    }
+
     @discardableResult
     public mutating func recordObservation(candidateID: UUID, lighting: String,
                                            surface: String, notes: String,

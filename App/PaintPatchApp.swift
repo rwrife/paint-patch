@@ -37,6 +37,7 @@ final class Notebook {
         do {
             try repository.change(edit)
             workspace = repository.workspace
+            error = nil
         } catch { self.error = "Not saved: \(error.localizedDescription)" }
     }
 
@@ -150,12 +151,23 @@ struct ContentView: View {
 struct RoomView: View {
     let notebook: Notebook
     let room: Room
+    @State private var rename: String
     @State private var label = ""
     @State private var brand = ""
     @State private var code = ""
     @State private var finish = ""
     @State private var wall = ""
     @State private var lot = ""
+
+    init(notebook: Notebook, room: Room) {
+        self.notebook = notebook
+        self.room = room
+        _rename = State(initialValue: room.name)
+    }
+
+    private var currentName: String {
+        notebook.workspace.rooms.first(where: { $0.id == room.id })?.name ?? room.name
+    }
 
     var body: some View {
         List {
@@ -202,7 +214,16 @@ struct RoomView: View {
                 }
                 .accessibilityIdentifier("workspace.open")
             }
-        }.navigationTitle(room.name)
+            Section("Rename room") {
+                TextField("Room name", text: $rename)
+                    .submitLabel(.done)
+                    .accessibilityIdentifier("room.rename")
+                Button("Save room name") {
+                    notebook.save { try $0.renameRoom(room.id, to: rename) }
+                }
+                .accessibilityIdentifier("room.rename.save")
+            }
+        }.navigationTitle(currentName)
     }
 }
 
@@ -318,15 +339,82 @@ struct PaintWorkspaceLayout: View {
     }
 }
 
+struct SampleEditForm: View {
+    let notebook: Notebook
+    let candidate: Candidate
+    @Environment(\.dismiss) private var dismiss
+    @State private var label: String
+    @State private var brand: String
+    @State private var code: String
+    @State private var finish: String
+    @State private var wall: String
+    @State private var lot: String
+
+    init(notebook: Notebook, candidate: Candidate) {
+        self.notebook = notebook
+        self.candidate = candidate
+        _label = State(initialValue: candidate.label)
+        _brand = State(initialValue: candidate.brand ?? "")
+        _code = State(initialValue: candidate.code ?? "")
+        _finish = State(initialValue: candidate.finish ?? "")
+        _wall = State(initialValue: candidate.wallLocation ?? "")
+        _lot = State(initialValue: candidate.canLot ?? "")
+    }
+
+    var body: some View {
+        NavigationStack {
+            List {
+                Section("Edit sample — blank means unknown") {
+                    TextField("Sample label", text: $label).submitLabel(.done)
+                        .accessibilityIdentifier("edit.label")
+                    TextField("Brand (optional)", text: $brand).submitLabel(.done)
+                    TextField("Can color code (optional)", text: $code).submitLabel(.done)
+                    TextField("Finish / sheen (optional)", text: $finish).submitLabel(.done)
+                    TextField("Patch location (optional)", text: $wall).submitLabel(.done)
+                    TextField("Can lot (optional)", text: $lot).submitLabel(.done)
+                }
+            }
+            .navigationTitle("Edit \(candidate.label)")
+            .safeAreaInset(edge: .bottom) {
+                if let error = notebook.error {
+                    Text(error).foregroundStyle(.red).padding()
+                        .accessibilityIdentifier("sample.edit.error")
+                }
+            }
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") { dismiss() }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Save changes") {
+                        notebook.save {
+                            try $0.reviseCandidate(candidate.id, label: label, brand: brand,
+                                                   code: code, finish: finish,
+                                                   wallLocation: wall, canLot: lot)
+                        }
+                        if notebook.error == nil { dismiss() }
+                    }
+                    .accessibilityIdentifier("sample.save")
+                }
+            }
+        }
+    }
+}
+
 struct SampleView: View {
     let notebook: Notebook
     let candidate: Candidate
+    @State private var showingEdit = false
     @State private var lighting = ""
     @State private var surface = ""
     @State private var notes = ""
     @State private var selectedPhoto: PhotosPickerItem?
     @State private var showCamera = false
     @State private var cameraJPEG: Data?
+
+    private var currentCandidate: Candidate {
+        notebook.workspace.candidates.first(where: { $0.id == candidate.id }) ?? candidate
+    }
 
     /// Camera is requested only when the user taps; denial/absence keeps manual + picker paths.
     private func openCamera() {
@@ -352,6 +440,15 @@ struct SampleView: View {
 
     var body: some View {
         List {
+            Section("Sample facts — transcribed, not measured") {
+                Text("Label: \(currentCandidate.label)")
+                    .accessibilityIdentifier("sample.current.label")
+                Text("Code: \(currentCandidate.code ?? "Unknown") · Finish: \(currentCandidate.finish ?? "Unknown")")
+                    .font(.caption)
+                    .accessibilityIdentifier("sample.current.facts")
+                Button("Edit sample labels") { showingEdit = true }
+                    .accessibilityIdentifier("sample.edit.open")
+            }
             Section("Record patch — lighting is your description, not a color match") {
                 TextField("Lighting (e.g. morning daylight)", text: $lighting)
                     .submitLabel(.done)
@@ -411,7 +508,11 @@ struct SampleView: View {
                     }
                 }
             }
-        }.navigationTitle(candidate.label)
+        }
+        .navigationTitle(currentCandidate.label)
+        .sheet(isPresented: $showingEdit) {
+            SampleEditForm(notebook: notebook, candidate: currentCandidate)
+        }
     }
 
     private func record() {

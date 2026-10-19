@@ -70,6 +70,18 @@ final class PaintPatchLaunchTests: XCTestCase {
         app.buttons["observation.save"].tap()
         XCTAssertTrue(app.staticTexts["Lighting: Morning daylight"].waitForExistence(timeout: 5))
 
+        // Revisions preserve linked observations and do not invent unknown finish.
+        reveal(app.buttons["sample.edit.open"]).tap()
+        app.textFields["edit.label"].tap()
+        let existing = app.textFields["edit.label"].value as? String ?? "Sample A"
+        app.textFields["edit.label"].typeText(String(repeating: XCUIKeyboardKey.delete.rawValue, count: existing.count))
+        app.textFields["edit.label"].typeText("Revised A")
+        dismissKeyboard()
+        app.buttons["sample.save"].tap()
+        XCTAssertTrue(app.staticTexts["sample.current.label"].waitForExistence(timeout: 5))
+        XCTAssertEqual(app.staticTexts["sample.current.label"].label, "Label: Revised A")
+        XCTAssertTrue(revealText(app.staticTexts["Lighting: Morning daylight"]))
+
         // Persistence proof: relaunch against the same directory, data survives.
         let directory = app.launchArguments.last!
         app.terminate()
