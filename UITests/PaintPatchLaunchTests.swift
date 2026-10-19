@@ -18,6 +18,10 @@ final class PaintPatchLaunchTests: XCTestCase {
         let done = app.keyboards.buttons["Done"]
         XCTAssertTrue(done.waitForExistence(timeout: 5), "Text fields must expose a Done key")
         done.tap()
+        waitForNoKeyboard()
+    }
+
+    private func waitForNoKeyboard() {
         for _ in 0..<50 where app.keyboards.firstMatch.exists {
             usleep(100_000)
         }
@@ -68,7 +72,7 @@ final class PaintPatchLaunchTests: XCTestCase {
         app.textFields["observation.lighting"].typeText("Morning daylight")
         dismissKeyboard()
         app.buttons["observation.save"].tap()
-        XCTAssertTrue(app.staticTexts["Lighting: Morning daylight"].waitForExistence(timeout: 5))
+        XCTAssertTrue(revealText(app.staticTexts["Lighting: Morning daylight"]))
 
         // Revisions preserve linked observations and do not invent unknown finish.
         reveal(app.buttons["sample.edit.open"]).tap()
@@ -78,7 +82,8 @@ final class PaintPatchLaunchTests: XCTestCase {
         app.textFields["edit.label"].typeText("Revised A")
         dismissKeyboard()
         app.buttons["sample.save"].tap()
-        XCTAssertTrue(app.staticTexts["sample.current.label"].waitForExistence(timeout: 5))
+        waitForNoKeyboard()
+        XCTAssertTrue(revealText(app.staticTexts["sample.current.label"]))
         XCTAssertEqual(app.staticTexts["sample.current.label"].label, "Label: Revised A")
         XCTAssertTrue(revealText(app.staticTexts["Lighting: Morning daylight"]))
 
