@@ -24,11 +24,11 @@ Native Swift (SwiftUI/UIKit) iPhone-only app, built with iOS 26+ SDK; Xcode 26.0
 
 ## Status and milestones
 
-Documentation/backlog scaffold only. No Swift app, Xcode project, `AppStore/icon.png`, CI, archive, or TestFlight build yet. First create the native shell, then domain/store, recording flow, accessible comparison, exports, and release artifacts. `AppStore/description.txt` is draft listing copy that must be reviewed against real shipping behavior. Once the app skeleton exists, generate a real `AppStore/icon.png` using `hermes-image-gen` after reading repo and listing; wire it into the Xcode asset catalog. No placeholder is acceptable.
+Native SwiftUI iPhone project and local domain are implemented. Rooms, can labels, observations, comparison, explicit selection, touch-up history, CSV inventory, and previewed JSON/photo backup and restore are available. Backup exports are self-contained versioned JSON with SHA-256 checksums; import validates the manifest and references before showing counts, then merges by id only after explicit Apply. Existing ids win; new photos get fresh local filenames. Failed restore rolls back staged photos and record changes. Files and photos remain local unless you explicitly export them. File-picker UI and backup flow require native Apple CI acceptance; Linux package tests do not prove an iOS archive. `AppStore/description.txt` is draft listing copy; real `AppStore/icon.png`, signed release workflow, TestFlight processing, and listing review remain pending.
 
-## Build quickstart (once issue #1 lands)
+## Build quickstart
 
-Open the Xcode project with the pinned Xcode 26.0.1 and build an iPhone simulator target with the iOS 26+ SDK. Until then there is no application build/test command. The Swift package domain tests and Apple simulator journey will be specified in the project skeleton issue; do not report them as run now.
+Run `swift test --package-path Packages/PaintPatchKit` for domain tests. On macOS, CI calls `Scripts/ci.sh <PR-head-sha>` with Xcode 26.0.1 (17A400) and iOS 26 SDK. Only Apple simulator CI can validate the app UI; Linux Swift tests cannot.
 
 ## Distribution
 

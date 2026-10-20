@@ -1,7 +1,22 @@
 import SwiftUI
 import AVFoundation
 import PhotosUI
+import UniformTypeIdentifiers
 import PaintPatchKit
+
+struct NotebookExport: FileDocument {
+    static var readableContentTypes: [UTType] { [.json, .commaSeparatedText] }
+    var data: Data
+
+    init(data: Data) { self.data = data }
+    init(configuration: ReadConfiguration) throws {
+        guard let data = configuration.file.regularFileContents else { throw CocoaError(.fileReadCorruptFile) }
+        self.data = data
+    }
+    func fileWrapper(configuration: WriteConfiguration) throws -> FileWrapper {
+        FileWrapper(regularFileWithContents: data)
+    }
+}
 
 @main
 struct PaintPatchApp: App {
@@ -77,6 +92,122 @@ final class Notebook {
     func logTouchUp(in room: Room, canLot: String, notes: String) {
         save { _ = try $0.logTouchUp(in: room.id, canLot: canLot, notes: notes) }
     }
+
+    /// Bytes only; nothing leaves the device unless the user saves the file via the system picker.
+    func backupData() -> Data? {
+        guard let repository else { error = "Notebook unavailable; nothing exported."; return nil }
+        do {
+            error = nil
+            return try repository.makeBackup().encoded()
+        } catch { self.error = "Backup failed: \(error.localizedDescription)"; return nil }
+    }
+
+    func csvData() -> Data? {
+        do { return try workspace.inventoryCSV().data(using: .utf8) }
+        catch { self.error = "Export failed: \(error.localizedDescription)"; return nil }
+    }
+
+    /// Preview already happened; restore stages photos then saves atomically with rollback.
+    func restore(_ backup: BackupDocument) -> BackupPreview? {
+        guard let repository else { error = "Notebook unavailable; nothing restored."; return nil }
+        do {
+            error = nil
+            let preview = try repository.restore(backup)
+            workspace = repository.workspace
+            return preview
+        } catch { self.error = "Restore failed: \(error.localizedDescription)"; return nil }
+    }
+}
+
+struct BackupView: View {
+    let notebook: Notebook
+    @State private var backupDoc: NotebookExport?
+    @State private var csvDoc: NotebookExport?
+    @State private var pending: BackupDocument?
+    @State private var preview: BackupPreview?
+    @State private var restoring = false
+
+    var body: some View {
+        List {
+            Section("Export — files are saved by you; Paint Patch never sends anything") {
+                Button("Prepare backup file") {
+                    backupDoc = notebook.backupData().map { NotebookExport(data: $0) }
+                }
+                .accessibilityIdentifier("backup.prepare")
+                Button("Prepare CSV inventory") {
+                    csvDoc = notebook.csvData().map(NotebookExport.init(data:))
+                }
+                .accessibilityIdentifier("backup.csv")
+            }
+            Section("Restore — choose a backup file; nothing changes until you apply the preview") {
+                Button("Choose backup file…") { restoring = true }
+                    .accessibilityIdentifier("backup.import")
+                if let preview {
+                    counts(preview)
+                    Button("Apply restore") { apply() }
+                        .accessibilityIdentifier("backup.apply")
+                    Button("Cancel") { self.preview = nil; pending = nil }
+                } else {
+                    Text("Nothing selected. Restore merges by record id; existing records win and duplicates are skipped.")
+                        .font(.caption)
+                }
+            }
+        }
+        .navigationTitle("Backup & export")
+        .fileExporter(isPresented: Binding(get: { backupDoc != nil }, set: { if !$0 { backupDoc = nil } }),
+                      document: backupDoc ?? NotebookExport(data: Data()), contentType: .json,
+                      defaultFilename: "paint-patch-backup") { _ in backupDoc = nil }
+        .fileExporter(isPresented: Binding(get: { csvDoc != nil }, set: { if !$0 { csvDoc = nil } }),
+                      document: csvDoc ?? NotebookExport(data: Data()), contentType: .commaSeparatedText,
+                      defaultFilename: "paint-patch-inventory") { _ in csvDoc = nil }
+        .fileImporter(isPresented: $restoring, allowedContentTypes: [.json], allowsMultipleSelection: false) { result in
+            ingest(result)
+        }
+        .alert("Notebook error", isPresented: Binding(get: { notebook.error != nil },
+                                                      set: { if !$0 { notebook.error = nil } })) {
+            Button("OK") { notebook.error = nil }
+        } message: { Text(notebook.error ?? "") }
+    }
+
+    private func counts(_ preview: BackupPreview) -> some View {
+        Group {
+            Text("Records to add: \(preview.newRecordCount)")
+                .accessibilityIdentifier("backup.preview.new")
+            Text("Rooms \(preview.rooms.new) new · \(preview.rooms.duplicate) duplicate")
+            Text("Samples \(preview.candidates.new) new · \(preview.candidates.duplicate) duplicate")
+            Text("Photos \(preview.photos.new) new · \(preview.photos.duplicate) duplicate")
+            Text("Created \(preview.createdAt.formatted(date: .abbreviated, time: .shortened))")
+        }
+    }
+
+    private func ingest(_ result: Result<[URL], Error>) {
+        preview = nil
+        pending = nil
+        switch result {
+        case .failure(let error):
+            notebook.error = "Could not read file: \(error.localizedDescription)"
+        case .success(let urls):
+            guard let url = urls.first else { return }
+            // Security-scoped, read into memory, then never touch the URL again.
+            guard url.startAccessingSecurityScopedResource() else {
+                notebook.error = "No permission to read that file."; return
+            }
+            defer { url.stopAccessingSecurityScopedResource() }
+            guard let data = try? Data(contentsOf: url) else {
+                notebook.error = "Could not read file."; return
+            }
+            do {
+                let document = try BackupDocument.decode(data)
+                pending = document
+                preview = document.preview(against: notebook.workspace)
+            } catch { notebook.error = "Not a usable backup: \(error.localizedDescription)" }
+        }
+    }
+
+    private func apply() {
+        guard let pending else { return }
+        if notebook.restore(pending) != nil { self.pending = nil; preview = nil }
+    }
 }
 
 struct CameraCapture: UIViewControllerRepresentable {
@@ -136,6 +267,12 @@ struct ContentView: View {
                         ForEach(notebook.workspace.rooms) { room in
                             NavigationLink(room.name) { RoomView(notebook: notebook, room: room) }
                         }
+                    }
+                    Section("Data & privacy") {
+                        NavigationLink("Backup, restore & export") {
+                            BackupView(notebook: notebook)
+                        }
+                        .accessibilityIdentifier("app.backup")
                     }
                 }
             }
