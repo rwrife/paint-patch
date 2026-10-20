@@ -156,4 +156,16 @@ final class PaintPatchLaunchTests: XCTestCase {
         XCTAssertEqual(reveal(app.staticTexts["workspace.selected"]).label, "Selected: None")
         XCTAssertTrue(revealText(app.staticTexts["Alpha · Lot: Unknown"]))
     }
+
+    /// Native file pickers are system UI and not driven here; the journey proves the screen is
+    /// reachable and that restore needs an explicit file choice (nothing pending by default).
+    func testBackupScreenReachableAndNothingPendingByDefault() {
+        launchApp()
+        XCTAssertTrue(revealText(app.staticTexts["Data & privacy"]) || reveal(app.buttons["app.backup"]).exists)
+        reveal(app.buttons["app.backup"]).tap()
+        XCTAssertTrue(app.buttons["backup.prepare"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["backup.csv"].exists)
+        XCTAssertTrue(app.buttons["backup.import"].exists)
+        XCTAssertFalse(app.buttons["backup.apply"].exists, "No restore may be applicable before a previewed file")
+    }
 }
