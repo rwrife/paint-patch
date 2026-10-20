@@ -125,17 +125,17 @@ public struct BackupDocument: Codable, Equatable, Sendable {
     }
 
     public func preview(against workspace: PaintWorkspace) -> BackupPreview {
-        func tally<T: Identifiable>(_ incoming: [T], _ existing: [T]) -> BackupPreview.Tally where T.ID == UUID {
-            let known = Set(existing.map(\.id))
-            let duplicates = incoming.filter { known.contains($0.id) }.count
+        func tally<T>(_ incoming: [T], _ existing: [T], id: KeyPath<T, UUID>) -> BackupPreview.Tally {
+            let known = Set(existing.map { $0[keyPath: id] })
+            let duplicates = incoming.filter { known.contains($0[keyPath: id]) }.count
             return .init(new: incoming.count - duplicates, duplicate: duplicates)
         }
         var preview = BackupPreview(createdAt: createdAt)
-        preview.rooms = tally(records.rooms, workspace.rooms)
-        preview.candidates = tally(records.candidates, workspace.candidates)
-        preview.observations = tally(records.observations, workspace.observations)
-        preview.selections = tally(records.selections, workspace.selections)
-        preview.touchUps = tally(records.touchUps, workspace.touchUps)
+        preview.rooms = tally(records.rooms, workspace.rooms, id: \.id)
+        preview.candidates = tally(records.candidates, workspace.candidates, id: \.id)
+        preview.observations = tally(records.observations, workspace.observations, id: \.id)
+        preview.selections = tally(records.selections, workspace.selections, id: \.id)
+        preview.touchUps = tally(records.touchUps, workspace.touchUps, id: \.id)
         let knownPhotos = Set(workspace.photos.map(\.id))
         let duplicatePhotos = photos.filter { knownPhotos.contains($0.id) }.count
         preview.photos = .init(new: photos.count - duplicatePhotos, duplicate: duplicatePhotos)
@@ -148,15 +148,15 @@ extension PaintWorkspace {
     /// Result is validated, so a backup that would break references throws and changes nothing.
     func applying(_ backup: BackupDocument, photoFileNames: [UUID: String]) throws -> PaintWorkspace {
         var merged = self
-        func add<T: Identifiable>(_ incoming: [T], to existing: inout [T]) where T.ID == UUID {
-            let known = Set(existing.map(\.id))
-            existing.append(contentsOf: incoming.filter { !known.contains($0.id) })
+        func add<T>(_ incoming: [T], to existing: inout [T], id: KeyPath<T, UUID>) {
+            let known = Set(existing.map { $0[keyPath: id] })
+            existing.append(contentsOf: incoming.filter { !known.contains($0[keyPath: id]) })
         }
-        add(backup.records.rooms, to: &merged.rooms)
-        add(backup.records.candidates, to: &merged.candidates)
-        add(backup.records.observations, to: &merged.observations)
-        add(backup.records.selections, to: &merged.selections)
-        add(backup.records.touchUps, to: &merged.touchUps)
+        add(backup.records.rooms, to: &merged.rooms, id: \.id)
+        add(backup.records.candidates, to: &merged.candidates, id: \.id)
+        add(backup.records.observations, to: &merged.observations, id: \.id)
+        add(backup.records.selections, to: &merged.selections, id: \.id)
+        add(backup.records.touchUps, to: &merged.touchUps, id: \.id)
         for photo in backup.photos where !photos.contains(where: { $0.id == photo.id }) {
             guard let name = photoFileNames[photo.id] else { throw BackupError.malformed }
             try merged.addPhoto(PhotoReference(id: photo.id, fileName: name))
