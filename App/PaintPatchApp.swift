@@ -360,7 +360,12 @@ struct RoomView: View {
                 }
                 .accessibilityIdentifier("room.rename.save")
             }
-        }.navigationTitle(currentName)
+        }
+        .navigationTitle(currentName)
+        .alert("Notebook error", isPresented: Binding(get: { notebook.error != nil },
+                                                      set: { if !$0 { notebook.error = nil } })) {
+            Button("OK") { notebook.error = nil }
+        } message: { Text(notebook.error ?? "") }
     }
 }
 
@@ -652,6 +657,10 @@ struct SampleView: View {
         .sheet(isPresented: $showingEdit) {
             SampleEditForm(notebook: notebook, candidate: currentCandidate)
         }
+        .alert("Notebook error", isPresented: Binding(get: { notebook.error != nil },
+                                                      set: { if !$0 { notebook.error = nil } })) {
+            Button("OK") { notebook.error = nil }
+        } message: { Text(notebook.error ?? "") }
     }
 
     private func record() {
