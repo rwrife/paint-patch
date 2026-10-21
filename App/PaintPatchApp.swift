@@ -555,6 +555,8 @@ struct SampleView: View {
 
     /// Camera is requested only when the user taps; denial/absence keeps manual + picker paths.
     private func openCamera() {
+        // ponytail: UI-test denial injection only; test real permission prompts on a device when available.
+        if ProcessInfo.processInfo.arguments.contains("-PPTestCameraDenied") { denied(); return }
         guard UIImagePickerController.isSourceTypeAvailable(.camera) else {
             notebook.error = "No camera available. Save notes or choose a photo instead."
             return
