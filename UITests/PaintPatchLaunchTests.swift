@@ -157,6 +157,42 @@ final class PaintPatchLaunchTests: XCTestCase {
         XCTAssertTrue(revealText(app.staticTexts["Alpha · Lot: Unknown"]))
     }
 
+    func testDeniedCameraPreservesManualObservationAndAccessibleFacts() {
+        launchApp()
+        app.textFields["room.name"].tap()
+        app.textFields["room.name"].typeText("Den")
+        dismissKeyboard()
+        app.buttons["room.add"].tap()
+        app.staticTexts["Den"].tap()
+        app.textFields["sample.label"].tap()
+        app.textFields["sample.label"].typeText("Unknown can")
+        dismissKeyboard()
+        app.buttons["sample.add"].tap()
+        revealText(app.staticTexts["Unknown can"])
+        app.staticTexts["Unknown can"].tap()
+        XCTAssertEqual(app.staticTexts["sample.current.facts"].label,
+                       "Code: Unknown · Finish: Unknown")
+
+        // Relaunch same notebook with deterministic permission-denial injection, not simulator
+        // camera absence; assert user still has manual path after denial.
+        let directory = app.launchArguments.last!
+        app.terminate()
+        app.launchArguments = ["-PPTestContainerDirectory", directory, "-PPTestCameraDenied"]
+        app.launch()
+        app.staticTexts["Den"].tap()
+        revealText(app.staticTexts["Unknown can"])
+        app.staticTexts["Unknown can"].tap()
+        reveal(app.buttons["observation.camera"]).tap()
+        XCTAssertTrue(app.alerts["Notebook error"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.alerts.staticTexts["Camera access is off. Enable it in Settings, or save notes / choose a photo instead."].exists)
+        app.alerts.buttons["OK"].tap()
+        app.textFields["observation.lighting"].tap()
+        app.textFields["observation.lighting"].typeText("Warm lamp")
+        dismissKeyboard()
+        reveal(app.buttons["observation.save"]).tap()
+        XCTAssertTrue(revealText(app.staticTexts["Lighting: Warm lamp"]))
+    }
+
     /// Native file pickers are system UI and not driven here; the journey proves the screen is
     /// reachable and that restore needs an explicit file choice (nothing pending by default).
     func testBackupScreenReachableAndNothingPendingByDefault() {

@@ -22,6 +22,25 @@ final class ComparisonSelectionTests: XCTestCase {
         XCTAssertFalse(PaintWorkspace.sameTranscribedPaint(b, b))
     }
 
+    func testMixedLightingIsProvenanceNotAColorMatch() throws {
+        let (room, a, _) = fixture()
+        var ws = PaintWorkspace()
+        ws.rooms = [room]
+        ws.candidates = [a]
+        let morning = try ws.recordObservation(candidateID: a.id, lighting: " North window ",
+                                                surface: "wall", notes: "", observedAt: .distantPast)
+        let evening = try ws.recordObservation(candidateID: a.id, lighting: " Warm lamp ",
+                                                surface: "wall", notes: "", observedAt: .distantFuture)
+        XCTAssertEqual(ws.observations.map(\.lighting), ["North window", "Warm lamp"])
+        XCTAssertNotEqual(morning.lighting, evening.lighting)
+        XCTAssertNil(ws.selectedCandidateID(in: room.id), "Observations cannot select paint")
+        let unknownFinish = Candidate(roomID: room.id, label: "Same code", brand: a.brand,
+                                      code: a.code, finish: nil)
+        XCTAssertFalse(PaintWorkspace.sameTranscribedPaint(a, unknownFinish))
+        let bytes = try JSONEncoder().encode(ws)
+        XCTAssertEqual(try JSONDecoder().decode(PaintWorkspace.self, from: bytes), ws)
+    }
+
     func testSelectionValidatesRoomMembershipAndAppendOnlyHistory() throws {
         let (room, a, b) = fixture()
         var ws = PaintWorkspace()
