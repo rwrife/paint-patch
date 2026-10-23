@@ -46,6 +46,8 @@ public struct BackupPreview: Equatable, Sendable {
     public var selections = Tally()
     public var touchUps = Tally()
     public var photos = Tally()
+    /// False when existing ids would leave dangling or cross-room references after merge.
+    public var canApply = true
 
     public var newRecordCount: Int {
         rooms.new + candidates.new + observations.new + selections.new + touchUps.new + photos.new
@@ -139,6 +141,10 @@ public struct BackupDocument: Codable, Equatable, Sendable {
         let knownPhotos = Set(workspace.photos.map(\.id))
         let duplicatePhotos = photos.filter { knownPhotos.contains($0.id) }.count
         preview.photos = .init(new: photos.count - duplicatePhotos, duplicate: duplicatePhotos)
+        // Dry-run the merge in memory (placeholder photo names, nothing written) so the
+        // preview can warn before Apply instead of only failing afterwards.
+        let placeholderNames = Dictionary(uniqueKeysWithValues: photos.map { ($0.id, $0.id.uuidString + ".jpg") })
+        preview.canApply = (try? workspace.applying(self, photoFileNames: placeholderNames)) != nil
         return preview
     }
 }
