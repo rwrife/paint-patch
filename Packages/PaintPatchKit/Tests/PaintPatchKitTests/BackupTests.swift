@@ -45,6 +45,7 @@ final class BackupTests: XCTestCase {
         XCTAssertEqual(preview.candidates.new, 1)
         XCTAssertEqual(preview.photos.new, 1)
         XCTAssertEqual(preview.newRecordCount, 6)
+        XCTAssertTrue(preview.canApply)
         XCTAssertTrue(target.workspace.rooms.isEmpty, "Preview must not write")
         try target.restore(backup)
         XCTAssertEqual(target.workspace.rooms, [room])
@@ -106,10 +107,15 @@ final class BackupTests: XCTestCase {
             $0.candidates.append(Candidate(id: candidate.id, roomID: otherRoom.id, label: "Other paint"))
         }
         let before = target.workspace
+        let preview = backup.preview(against: before)
+        XCTAssertFalse(preview.canApply, "Conflicting room membership must be shown before Apply")
+        XCTAssertEqual(target.workspace, before, "Preview must leave notebook untouched")
+        let folder = target.directory.appendingPathComponent("photos")
+        XCTAssertFalse(FileManager.default.fileExists(atPath: folder.path), "Preview must not stage photos")
         XCTAssertThrowsError(try target.restore(backup))
         XCTAssertEqual(target.workspace, before)
         XCTAssertEqual(try WorkspaceRepository(directory: target.directory).workspace, before)
-        let folder = target.directory.appendingPathComponent("photos")
         XCTAssertTrue(try FileManager.default.contentsOfDirectory(atPath: folder.path).isEmpty)
     }
+
 }

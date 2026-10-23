@@ -145,6 +145,7 @@ struct BackupView: View {
                 if let preview {
                     counts(preview)
                     Button("Apply restore") { apply() }
+                        .disabled(!preview.canApply)
                         .accessibilityIdentifier("backup.apply")
                     Button("Cancel") { self.preview = nil; pending = nil }
                 } else {
@@ -177,6 +178,12 @@ struct BackupView: View {
             Text("Samples \(preview.candidates.new) new · \(preview.candidates.duplicate) duplicate")
             Text("Photos \(preview.photos.new) new · \(preview.photos.duplicate) duplicate")
             Text("Created \(preview.createdAt.formatted(date: .abbreviated, time: .shortened))")
+            if !preview.canApply {
+                Text("Restore conflict: existing records in this notebook conflict with incoming references.")
+                    .font(.caption)
+                    .foregroundStyle(.red)
+                    .accessibilityIdentifier("backup.preview.conflict")
+            }
         }
     }
 
