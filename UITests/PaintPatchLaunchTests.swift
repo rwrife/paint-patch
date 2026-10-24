@@ -4,9 +4,9 @@ final class PaintPatchLaunchTests: XCTestCase {
     private var app: XCUIApplication!
 
     /// Each run gets a fresh notebook directory (handled by `-PPTestContainerDirectory`).
-    private func launchApp() {
+    private func launchApp(extraArguments: [String] = []) {
         app = XCUIApplication()
-        app.launchArguments = ["-PPTestContainerDirectory",
+        app.launchArguments = extraArguments + ["-PPTestContainerDirectory",
                                NSTemporaryDirectory() + "pp-\(UUID().uuidString)"]
         app.launch()
         XCTAssertTrue(app.staticTexts["app.title"].waitForExistence(timeout: 10))
@@ -203,5 +203,58 @@ final class PaintPatchLaunchTests: XCTestCase {
         XCTAssertTrue(app.buttons["backup.csv"].exists)
         XCTAssertTrue(app.buttons["backup.import"].exists)
         XCTAssertFalse(app.buttons["backup.apply"].exists, "No restore may be applicable before a previewed file")
+    }
+
+    /// Restore journey through the real preview/apply UI. The picked file is a launch-argument
+    /// fixture (system pickers are not drivable); decode, preview, cancel and apply are real.
+    func testRestorePreviewCancelThenApplyPersists() {
+        launchApp(extraArguments: ["-PPTestRestoreFixture"])
+        reveal(app.buttons["app.backup"]).tap()
+        reveal(app.buttons["backup.import"]).tap()
+        XCTAssertEqual(reveal(app.staticTexts["backup.preview.new"]).label, "Records to add: 2")
+        XCTAssertFalse(app.staticTexts["backup.preview.conflict"].exists)
+
+        // Cancel discards the preview; nothing is applicable and nothing was written.
+        reveal(app.buttons["Cancel"]).tap()
+        XCTAssertFalse(app.buttons["backup.apply"].exists)
+
+        reveal(app.buttons["backup.import"]).tap()
+        reveal(app.buttons["backup.apply"]).tap()
+        for _ in 0..<50 where app.buttons["backup.apply"].exists { usleep(100_000) }
+        XCTAssertFalse(app.buttons["backup.apply"].exists, "Preview clears after a successful apply")
+
+        // Restored records are visible and survive relaunch of the same notebook.
+        app.navigationBars.buttons.firstMatch.tap()
+        XCTAssertTrue(revealText(app.staticTexts["Restored Room"]))
+        let directory = app.launchArguments.last!
+        app.terminate()
+        app.launchArguments = ["-PPTestContainerDirectory", directory]
+        app.launch()
+        XCTAssertTrue(revealText(app.staticTexts["Restored Room"]))
+    }
+
+    /// Photos picker is system-owned (no library permission to deny). The photo-less path must
+    /// stay available and the screen must never ask for broad library access.
+    func testPhotoPickerIsPermissionFreeAndManualPathRemains() {
+        launchApp()
+        app.textFields["room.name"].tap()
+        app.textFields["room.name"].typeText("Loft")
+        dismissKeyboard()
+        app.buttons["room.add"].tap()
+        app.staticTexts["Loft"].tap()
+        app.textFields["sample.label"].tap()
+        app.textFields["sample.label"].typeText("Loft can")
+        dismissKeyboard()
+        app.buttons["sample.add"].tap()
+        XCTAssertTrue(revealText(app.staticTexts["Loft can"]))
+        app.staticTexts["Loft can"].tap()
+        XCTAssertTrue(reveal(app.buttons["observation.photo"]).exists)
+        XCTAssertTrue(revealText(app.staticTexts["Photo access uses system picker only. No broad library permission needed."]))
+        app.textFields["observation.lighting"].tap()
+        app.textFields["observation.lighting"].typeText("North window")
+        dismissKeyboard()
+        reveal(app.buttons["observation.save"]).tap()
+        XCTAssertTrue(revealText(app.staticTexts["Lighting: North window"]))
+        XCTAssertFalse(app.alerts.firstMatch.exists)
     }
 }

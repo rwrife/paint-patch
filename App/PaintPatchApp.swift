@@ -140,7 +140,7 @@ struct BackupView: View {
                 .accessibilityIdentifier("backup.csv")
             }
             Section("Restore — choose a backup file; nothing changes until you apply the preview") {
-                Button("Choose backup file…") { restoring = true }
+                Button("Choose backup file…") { chooseFile() }
                     .accessibilityIdentifier("backup.import")
                 if let preview {
                     counts(preview)
@@ -168,6 +168,24 @@ struct BackupView: View {
                                                       set: { if !$0 { notebook.error = nil } })) {
             Button("OK") { notebook.error = nil }
         } message: { Text(notebook.error ?? "") }
+    }
+
+    /// ponytail: system file pickers cannot be driven by XCUITest; this launch-argument fixture
+    /// feeds the same decode/preview/apply path a picked file would. Real picker needs device QA.
+    private func chooseFile() {
+        guard ProcessInfo.processInfo.arguments.contains("-PPTestRestoreFixture") else { restoring = true; return }
+        preview = nil
+        pending = nil
+        do {
+            var fixture = PaintWorkspace()
+            let room = try fixture.recordRoom("Restored Room")
+            _ = try fixture.recordCandidate(roomID: room.id, label: "Restored can", brand: "", code: "",
+                                            finish: "", wallLocation: "", canLot: "")
+            let bytes = try BackupDocument.make(from: fixture) { _ in nil }.encoded()
+            let document = try BackupDocument.decode(bytes)
+            pending = document
+            preview = document.preview(against: notebook.workspace)
+        } catch { notebook.error = "Not a usable backup: \(error.localizedDescription)" }
     }
 
     private func counts(_ preview: BackupPreview) -> some View {
