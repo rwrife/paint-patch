@@ -46,6 +46,29 @@ final class PaintPatchLaunchTests: XCTestCase {
         launchApp()
     }
 
+    func testAccessibilityXXXLCanCreateRoomAndReachBackup() {
+        // UIKit requires this raw category name; descriptive English names are ignored.
+        let category = "UICTContentSizeCategoryAccessibilityXXXL"
+        app = XCUIApplication()
+        app.launchArguments = ["-PPTestContainerDirectory",
+                               NSTemporaryDirectory() + "pp-\(UUID().uuidString)",
+                               "-UIPreferredContentSizeCategoryName", category]
+        app.launchEnvironment["UIPreferredContentSizeCategoryName"] = category
+        app.launch()
+        XCTAssertTrue(app.staticTexts["app.title"].waitForExistence(timeout: 10))
+        XCTAssertTrue(app.textFields["room.name"].isHittable)
+        app.textFields["room.name"].tap()
+        app.textFields["room.name"].typeText("Studio")
+        dismissKeyboard()
+        reveal(app.buttons["room.add"]).tap()
+        XCTAssertTrue(revealText(app.staticTexts["Studio"]))
+        let backup = reveal(app.buttons["app.backup"])
+        XCTAssertTrue(backup.isHittable, "Backup must remain reachable at AX XXXL")
+        backup.tap()
+        XCTAssertTrue(reveal(app.buttons["backup.import"]).isHittable)
+        XCTAssertFalse(app.buttons["backup.apply"].exists)
+    }
+
     func testRecordRoomSampleAndLightingObservationJourney() {
         launchApp()
 
