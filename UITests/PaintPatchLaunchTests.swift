@@ -46,6 +46,14 @@ final class PaintPatchLaunchTests: XCTestCase {
         launchApp()
     }
 
+    func testSystemAccessibilityAuditOnNotebookAndBackup() throws {
+        launchApp()
+        try app.performAccessibilityAudit()
+        reveal(app.buttons["app.backup"]).tap()
+        XCTAssertTrue(app.buttons["backup.import"].waitForExistence(timeout: 5))
+        try app.performAccessibilityAudit()
+    }
+
     func testAccessibilityXXXLCanCreateRoomAndReachBackup() {
         // UIKit requires this raw category name; descriptive English names are ignored.
         let category = "UICTContentSizeCategoryAccessibilityXXXL"
