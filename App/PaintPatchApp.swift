@@ -129,18 +129,24 @@ struct BackupView: View {
 
     var body: some View {
         List {
-            Section("Export — files are saved by you; Paint Patch never sends anything") {
+            Section {
                 Button("Prepare backup file") {
                     backupDoc = notebook.backupData().map { NotebookExport(data: $0) }
                 }
+                .foregroundStyle(.primary)
                 .accessibilityIdentifier("backup.prepare")
                 Button("Prepare CSV inventory") {
                     csvDoc = notebook.csvData().map(NotebookExport.init(data:))
                 }
+                .foregroundStyle(.primary)
                 .accessibilityIdentifier("backup.csv")
+            } header: {
+                Text("Export — files are saved by you; Paint Patch never sends anything")
+                    .foregroundStyle(.primary)
             }
-            Section("Restore — choose a backup file; nothing changes until you apply the preview") {
+            Section {
                 Button("Choose backup file…") { chooseFile() }
+                    .foregroundStyle(.primary)
                     .accessibilityIdentifier("backup.import")
                 if let preview {
                     counts(preview)
@@ -150,8 +156,11 @@ struct BackupView: View {
                     Button("Cancel") { self.preview = nil; pending = nil }
                 } else {
                     Text("Nothing selected. Restore merges by record id; existing records win and duplicates are skipped.")
-                        .font(.caption)
+                        .font(.body)
                 }
+            } header: {
+                Text("Restore — choose a backup file; nothing changes until you apply the preview")
+                    .foregroundStyle(.primary)
             }
         }
         .navigationTitle("Backup & export")
@@ -286,18 +295,23 @@ struct ContentView: View {
                         Button("Add room") {
                             notebook.save { _ = try $0.recordRoom(name) }
                             if notebook.error == nil { name = "" }
-                        }.accessibilityIdentifier("room.add")
+                        }
+                        .foregroundStyle(.primary)
+                        .accessibilityIdentifier("room.add")
                     }
                     Section("Rooms") {
                         ForEach(notebook.workspace.rooms) { room in
                             NavigationLink(room.name) { RoomView(notebook: notebook, room: room) }
                         }
                     }
-                    Section("Data & privacy") {
+                    Section {
                         NavigationLink("Backup, restore & export") {
                             BackupView(notebook: notebook)
                         }
+                        .foregroundStyle(.primary)
                         .accessibilityIdentifier("app.backup")
+                    } header: {
+                        Text("Data & privacy").foregroundStyle(.primary)
                     }
                 }
             }
