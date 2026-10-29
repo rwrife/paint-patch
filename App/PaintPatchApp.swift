@@ -128,8 +128,10 @@ struct BackupView: View {
     @State private var restoring = false
 
     var body: some View {
-        List {
-            Section("Export — files are saved by you; Paint Patch never sends anything") {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 16) {
+                Text("Export — files are saved by you; Paint Patch never sends anything")
+                    .font(.headline)
                 Button("Prepare backup file") {
                     backupDoc = notebook.backupData().map { NotebookExport(data: $0) }
                 }
@@ -138,8 +140,8 @@ struct BackupView: View {
                     csvDoc = notebook.csvData().map(NotebookExport.init(data:))
                 }
                 .accessibilityIdentifier("backup.csv")
-            }
-            Section("Restore — choose a backup file; nothing changes until you apply the preview") {
+                Text("Restore — choose a backup file; nothing changes until you apply the preview")
+                    .font(.headline)
                 Button("Choose backup file…") { chooseFile() }
                     .accessibilityIdentifier("backup.import")
                 if let preview {
@@ -150,9 +152,12 @@ struct BackupView: View {
                     Button("Cancel") { self.preview = nil; pending = nil }
                 } else {
                     Text("Nothing selected. Restore merges by record id; existing records win and duplicates are skipped.")
-                        .font(.caption)
                 }
             }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding()
+            .buttonStyle(.bordered)
+            .tint(.primary)
         }
         .navigationTitle("Backup & export")
         .fileExporter(isPresented: Binding(get: { backupDoc != nil }, set: { if !$0 { backupDoc = nil } }),
@@ -278,27 +283,35 @@ struct ContentView: View {
                     .accessibilityIdentifier("app.title")
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.horizontal)
-                List {
-                    Section("New room") {
+                ScrollView {
+                    VStack(alignment: .leading, spacing: 16) {
+                        Text("New room").font(.headline)
                         TextField("Room name", text: $name)
                             .submitLabel(.done)
+                            .textFieldStyle(.roundedBorder)
                             .accessibilityIdentifier("room.name")
                         Button("Add room") {
                             notebook.save { _ = try $0.recordRoom(name) }
                             if notebook.error == nil { name = "" }
-                        }.accessibilityIdentifier("room.add")
-                    }
-                    Section("Rooms") {
+                        }
+                        .accessibilityIdentifier("room.add")
+                        Text("Rooms").font(.headline)
                         ForEach(notebook.workspace.rooms) { room in
                             NavigationLink(room.name) { RoomView(notebook: notebook, room: room) }
+                                .accessibilityIdentifier("room.open.\(room.name)")
+                                .frame(maxWidth: .infinity, minHeight: 56, alignment: .leading)
                         }
-                    }
-                    Section("Data & privacy") {
+                        Text("Data & privacy").font(.headline)
                         NavigationLink("Backup, restore & export") {
                             BackupView(notebook: notebook)
                         }
+                        .frame(maxWidth: .infinity, minHeight: 56, alignment: .leading)
                         .accessibilityIdentifier("app.backup")
                     }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding()
+                    .buttonStyle(.bordered)
+                    .tint(.primary)
                 }
             }
             .navigationTitle("Paint Patch")

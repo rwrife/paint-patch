@@ -46,6 +46,14 @@ final class PaintPatchLaunchTests: XCTestCase {
         launchApp()
     }
 
+    func testSystemAccessibilityAuditOnNotebookAndBackup() throws {
+        launchApp()
+        try app.performAccessibilityAudit()
+        reveal(app.buttons["app.backup"]).tap()
+        XCTAssertTrue(app.buttons["backup.import"].waitForExistence(timeout: 5))
+        try app.performAccessibilityAudit()
+    }
+
     func testAccessibilityXXXLCanCreateRoomAndReachBackup() {
         // UIKit requires this raw category name; descriptive English names are ignored.
         let category = "UICTContentSizeCategoryAccessibilityXXXL"
@@ -61,7 +69,7 @@ final class PaintPatchLaunchTests: XCTestCase {
         app.textFields["room.name"].typeText("Studio")
         dismissKeyboard()
         reveal(app.buttons["room.add"]).tap()
-        XCTAssertTrue(revealText(app.staticTexts["Studio"]))
+        XCTAssertTrue(revealText(app.buttons["room.open.Studio"]))
         let backup = reveal(app.buttons["app.backup"])
         XCTAssertTrue(backup.isHittable, "Backup must remain reachable at AX XXXL")
         backup.tap()
@@ -76,9 +84,9 @@ final class PaintPatchLaunchTests: XCTestCase {
         app.textFields["room.name"].typeText("Bedroom")
         dismissKeyboard()
         app.buttons["room.add"].tap()
-        XCTAssertTrue(app.staticTexts["Bedroom"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["room.open.Bedroom"].waitForExistence(timeout: 5))
 
-        app.staticTexts["Bedroom"].tap()
+        app.buttons["room.open.Bedroom"].tap()
         app.textFields["sample.label"].tap()
         app.textFields["sample.label"].typeText("Sample A")
         app.textFields["sample.code"].tap()
@@ -115,7 +123,7 @@ final class PaintPatchLaunchTests: XCTestCase {
         app.terminate()
         app.launchArguments = ["-PPTestContainerDirectory", directory]
         app.launch()
-        XCTAssertTrue(app.staticTexts["Bedroom"].waitForExistence(timeout: 10))
+        XCTAssertTrue(app.buttons["room.open.Bedroom"].waitForExistence(timeout: 10))
     }
 
     func testCompareSelectAndTouchUpJourney() throws {
@@ -125,7 +133,7 @@ final class PaintPatchLaunchTests: XCTestCase {
         app.textFields["room.name"].typeText("Hall")
         dismissKeyboard()
         app.buttons["room.add"].tap()
-        app.staticTexts["Hall"].tap()
+        app.buttons["room.open.Hall"].tap()
 
         func addSample(_ label: String, code: String) {
             let labelField = app.textFields["sample.label"]
@@ -174,7 +182,7 @@ final class PaintPatchLaunchTests: XCTestCase {
         app.terminate()
         app.launchArguments = ["-PPTestContainerDirectory", directory]
         app.launch()
-        app.staticTexts["Hall"].tap()
+        app.buttons["room.open.Hall"].tap()
         reveal(app.buttons["workspace.open"]).tap()
         XCTAssertEqual(reveal(app.staticTexts["workspace.selected"]).label, "Selected: None")
         XCTAssertTrue(revealText(app.staticTexts["Alpha · Lot: Unknown"]))
@@ -186,7 +194,7 @@ final class PaintPatchLaunchTests: XCTestCase {
         app.textFields["room.name"].typeText("Den")
         dismissKeyboard()
         app.buttons["room.add"].tap()
-        app.staticTexts["Den"].tap()
+        app.buttons["room.open.Den"].tap()
         app.textFields["sample.label"].tap()
         app.textFields["sample.label"].typeText("Unknown can")
         dismissKeyboard()
@@ -202,7 +210,7 @@ final class PaintPatchLaunchTests: XCTestCase {
         app.terminate()
         app.launchArguments = ["-PPTestContainerDirectory", directory, "-PPTestCameraDenied"]
         app.launch()
-        app.staticTexts["Den"].tap()
+        app.buttons["room.open.Den"].tap()
         revealText(app.staticTexts["Unknown can"])
         app.staticTexts["Unknown can"].tap()
         reveal(app.buttons["observation.camera"]).tap()
@@ -248,12 +256,12 @@ final class PaintPatchLaunchTests: XCTestCase {
 
         // Restored records are visible and survive relaunch of the same notebook.
         app.navigationBars.buttons.firstMatch.tap()
-        XCTAssertTrue(revealText(app.staticTexts["Restored Room"]))
+        XCTAssertTrue(revealText(app.buttons["room.open.Restored Room"]))
         let directory = app.launchArguments.last!
         app.terminate()
         app.launchArguments = ["-PPTestContainerDirectory", directory]
         app.launch()
-        XCTAssertTrue(revealText(app.staticTexts["Restored Room"]))
+        XCTAssertTrue(revealText(app.buttons["room.open.Restored Room"]))
     }
 
     /// Photos picker is system-owned (no library permission to deny). The photo-less path must
@@ -264,7 +272,7 @@ final class PaintPatchLaunchTests: XCTestCase {
         app.textFields["room.name"].typeText("Loft")
         dismissKeyboard()
         app.buttons["room.add"].tap()
-        app.staticTexts["Loft"].tap()
+        app.buttons["room.open.Loft"].tap()
         app.textFields["sample.label"].tap()
         app.textFields["sample.label"].typeText("Loft can")
         dismissKeyboard()
