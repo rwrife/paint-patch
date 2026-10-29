@@ -157,6 +157,7 @@ struct BackupView: View {
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding()
             .buttonStyle(.bordered)
+            .tint(.primary)
         }
         .navigationTitle("Backup & export")
         .fileExporter(isPresented: Binding(get: { backupDoc != nil }, set: { if !$0 { backupDoc = nil } }),
@@ -297,6 +298,7 @@ struct ContentView: View {
                         Text("Rooms").font(.headline)
                         ForEach(notebook.workspace.rooms) { room in
                             NavigationLink(room.name) { RoomView(notebook: notebook, room: room) }
+                                .accessibilityIdentifier("room.open.\(room.name)")
                                 .frame(maxWidth: .infinity, minHeight: 56, alignment: .leading)
                         }
                         Text("Data & privacy").font(.headline)
@@ -309,6 +311,7 @@ struct ContentView: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding()
                     .buttonStyle(.bordered)
+                    .tint(.primary)
                 }
             }
             .navigationTitle("Paint Patch")
