@@ -264,6 +264,38 @@ final class PaintPatchLaunchTests: XCTestCase {
         XCTAssertTrue(revealText(app.buttons["room.open.Restored Room"]))
     }
 
+    /// When incoming backup references conflict with existing notebook records, the preview
+    /// flags the conflict and blocks Apply without mutating either memory or disk.
+    func testRestoreConflictPreviewBlocksApplyAndKeepsNotebookUntouched() {
+        launchApp(extraArguments: ["-PPTestRestoreConflictFixture"])
+
+        // Establish an existing sample whose ID will collide across rooms in the conflict fixture.
+        app.textFields["room.name"].tap()
+        app.textFields["room.name"].typeText("Original Room")
+        dismissKeyboard()
+        app.buttons["room.add"].tap()
+        app.buttons["room.open.Original Room"].tap()
+        app.textFields["sample.label"].tap()
+        app.textFields["sample.label"].typeText("Original Paint")
+        dismissKeyboard()
+        app.buttons["sample.add"].tap()
+        XCTAssertTrue(revealText(app.staticTexts["Original Paint"]))
+
+        app.navigationBars.buttons.firstMatch.tap()
+        reveal(app.buttons["app.backup"]).tap()
+        reveal(app.buttons["backup.import"]).tap()
+
+        XCTAssertTrue(reveal(app.staticTexts["backup.preview.conflict"]).waitForExistence(timeout: 5))
+        let apply = reveal(app.buttons["backup.apply"])
+        XCTAssertFalse(apply.isEnabled, "Apply must be disabled when restore has conflicts")
+
+        // Cancel out; verify notebook is completely untouched and restored room does not exist.
+        reveal(app.buttons["Cancel"]).tap()
+        app.navigationBars.buttons.firstMatch.tap()
+        XCTAssertFalse(app.buttons["room.open.Restored Room"].exists)
+        XCTAssertTrue(revealText(app.buttons["room.open.Original Room"]))
+    }
+
     /// Photos picker is system-owned (no library permission to deny). The photo-less path must
     /// stay available and the screen must never ask for broad library access.
     func testPhotoPickerIsPermissionFreeAndManualPathRemains() {
