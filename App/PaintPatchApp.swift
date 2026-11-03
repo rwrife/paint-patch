@@ -175,10 +175,12 @@ struct BackupView: View {
         } message: { Text(notebook.error ?? "") }
     }
 
-    /// ponytail: system file pickers cannot be driven by XCUITest; this launch-argument fixture
-    /// feeds the same decode/preview/apply path a picked file would. Real picker needs device QA.
+    /// ponytail: system file pickers cannot be driven by XCUITest; these fixtures feed the
+    /// real decode/preview/apply path. Picker selection and permissions still need device QA.
     private func chooseFile() {
-        guard ProcessInfo.processInfo.arguments.contains("-PPTestRestoreFixture") else { restoring = true; return }
+        let arguments = ProcessInfo.processInfo.arguments
+        let conflict = arguments.contains("-PPTestRestoreConflictFixture")
+        guard conflict || arguments.contains("-PPTestRestoreFixture") else { restoring = true; return }
         preview = nil
         pending = nil
         do {
@@ -186,6 +188,12 @@ struct BackupView: View {
             let room = try fixture.recordRoom("Restored Room")
             _ = try fixture.recordCandidate(roomID: room.id, label: "Restored can", brand: "", code: "",
                                             finish: "", wallLocation: "", canLot: "")
+            if conflict, let existing = notebook.workspace.candidates.first {
+                // Incoming candidate ID exists in another room. Its new selection cannot
+                // safely resolve after merge, so preview must block Apply without writing.
+                fixture.candidates[0].id = existing.id
+                _ = try fixture.selectCandidate(existing.id, in: room.id)
+            }
             let bytes = try BackupDocument.make(from: fixture) { _ in nil }.encoded()
             let document = try BackupDocument.decode(bytes)
             pending = document
